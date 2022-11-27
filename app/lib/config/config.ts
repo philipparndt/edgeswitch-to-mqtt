@@ -11,15 +11,17 @@ export type ConfigMqtt = {
     "bridge-info-topic"?: string
 }
 
-export type ConfigDenon = {
+export type ConfigEdgeSwitch = {
     "ip": string
+    "username": string
+    "password": string
+
+    "ports": number[]
 }
 
 export type Config = {
     mqtt: ConfigMqtt
-    denon: ConfigDenon
-    names: any,
-    "send-full-update": boolean
+    edgeswitch: ConfigEdgeSwitch
 }
 
 let appConfig: Config
@@ -30,13 +32,8 @@ const mqttDefaults = {
     "bridge-info": true
 }
 
-const configDefaults = {
-    "send-full-update": true
-}
-
 export const applyDefaults = (config: any) => {
     return {
-        ...configDefaults,
         ...config,
         mqtt: { ...mqttDefaults, ...config.mqtt }
     } as Config
