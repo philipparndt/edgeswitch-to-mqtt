@@ -1,0 +1,10 @@
+version: '2'
+
+services:
+  denonmqtt:
+    hostname: edgeswitch
+    image: pharndt/edgeswitch:${VERSION}
+    build: .
+    volumes:
+      - ./production/config:/var/lib/edgeswitch-to-mqtt-gw:ro
+    restart: "no"
