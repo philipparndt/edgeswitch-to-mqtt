@@ -11,6 +11,8 @@ process.on("uncaughtException", (err: any) => {
     }
     else {
         console.error("Uncaught Exception thrown", err)
+        console.log("Bye bye!")
+        process.exit(-1)
     }
 })
 
