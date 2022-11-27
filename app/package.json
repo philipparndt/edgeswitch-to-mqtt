@@ -1,7 +1,7 @@
 {
-    "name": "denon-to-mqtt",
+    "name": "edgeswitch-to-mqtt",
     "version": "0.1.0",
-    "description": "Denon To MQTT Gateway",
+    "description": "Edge Switch To MQTT Gateway",
     "main": "index.js",
     "scripts": {
         "test": "jest --coverage",

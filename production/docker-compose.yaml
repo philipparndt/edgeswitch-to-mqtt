@@ -1,11 +1,11 @@
 version: '2'
 
 services:
-    denonmqtt:
+  edgeswitchmqtt:
         environment:
             TZ: "Europe/Berlin"
-        hostname: denonmqtt
-        image: pharndt/denonmqtt
+        hostname: edgeswitchmqtt
+        image: pharndt/edgeswitchmqtt
         volumes:
-            - ./config:/var/lib/denon-to-mqtt-gw:rw
+            - ./config:/var/lib/edgeswitch-to-mqtt-gw:rw
         restart: always

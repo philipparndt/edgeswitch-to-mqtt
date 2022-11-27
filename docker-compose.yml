@@ -1,7 +1,7 @@
 version: '2'
 
 services:
-  denonmqtt:
+  edgeswitchmqtt:
     hostname: edgeswitch
     image: pharndt/edgeswitch:${VERSION}
     build: .
