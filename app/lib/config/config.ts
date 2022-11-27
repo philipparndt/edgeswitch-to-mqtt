@@ -11,12 +11,17 @@ export type ConfigMqtt = {
     "bridge-info-topic"?: string
 }
 
+export type Port = {
+    name: string
+    port: string
+}
+
 export type ConfigEdgeSwitch = {
     "ip": string
     "username": string
     "password": string
 
-    "ports": number[]
+    "ports": Port[]
 }
 
 export type Config = {

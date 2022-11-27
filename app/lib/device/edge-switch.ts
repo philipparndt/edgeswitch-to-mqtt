@@ -1,58 +1,67 @@
+import AsyncLock from "async-lock"
 import { NodeSSH } from "node-ssh"
 import { getAppConfig } from "../config/config"
 
+const lock = new AsyncLock({ timeout: 5000 })
+
 const exec = async (commands: string[], config = getAppConfig().edgeswitch): Promise<string> => {
-    const ssh = new NodeSSH()
     const messages: string[] = []
 
-    const client = await ssh.connect({
-        host: config.ip,
-        username: config.username,
-        password: config.password
-    })
+    await lock.acquire<string>("ssh", async (done) => {
+        const ssh = new NodeSSH()
 
-    return new Promise((resolve, reject) => {
-        client.requestShell().then(async (shell) => {
-            shell.on("data", (data: Buffer) => {
-                messages.push(data.toString("utf8"))
-            })
-            shell.on("close", async () => {
-                resolve(messages.join(""))
-            })
+        const client = await ssh.connect({
+            host: config.ip,
+            username: config.username,
+            password: config.password
+        })
 
-            for (const command of commands) {
-                await shell.write(`${command}\n`)
-            }
-            await shell.end()
+        return new Promise((resolve) => {
+            client.requestShell().then(async (shell) => {
+                shell.on("data", (data: Buffer) => {
+                    messages.push(data.toString("utf8"))
+                })
+                shell.on("close", async () => {
+                    resolve(messages.join(""))
+                    done()
+                })
+
+                for (const command of commands) {
+                    await shell.write(`${command}\n`)
+                }
+                await shell.end()
+            })
         })
     })
+
+    return messages.join("")
 }
 
-export const turnOff = async (port: number) => {
+export const turnOff = async (port: string) => {
     await exec([
         "configure",
-        `interface 0/${port}`,
+        `interface ${port}`,
         "poe opmode shutdown"]
     )
 }
 
-export const turnOn = async (port: number) => {
+export const turnOn = async (port: string) => {
     await exec([
         "configure",
-        `interface 0/${port}`,
+        `interface ${port}`,
         "poe opmode auto"]
     )
 }
 
-export const status = async (port: number) => {
+export const status = async (port: string) => {
     const message = await exec([
         "configure",
-        `show poe status 0/${port}`]
+        `show poe status ${port}`]
     )
 
-    const result = message
+    const result = (message ?? "")
         .split("\n")
-        .filter((line) => line.startsWith(`0/${port}`))
+        .filter((line) => line.startsWith(port))
         .map(line => line.trim())
         .map((line) => line.split(/\s+/g))[0]
 
@@ -63,7 +72,7 @@ export const status = async (port: number) => {
     return {
         interface: result[0],
         detection: result[1],
-        status: result[1].toLowerCase() === "good",
+        status: result[1].toLowerCase() === "good" ? 1 : 0,
         class: result[2],
         energy: +result[3],
         voltage: +result[4],

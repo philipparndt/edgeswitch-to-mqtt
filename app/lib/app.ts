@@ -1,53 +1,69 @@
 import EventSource from "eventsource"
 import cron from "node-cron"
-import { getAppConfig } from "./config/config"
-import { status } from "./device/edge-switch"
+import { getAppConfig, Port } from "./config/config"
+import { status, turnOff, turnOn } from "./device/edge-switch"
 import { log } from "./logger"
 
-import { connectMqtt, publish } from "./mqtt/mqtt-client"
+import { connectMqtt, mqttEmitter, publish } from "./mqtt/mqtt-client"
 
 let eventSource: EventSource
 
+const portByName: any = {}
+
+const statusUpdate = async (port: Port) => {
+    const statusResult = await status(port.port)
+    if (statusResult) {
+        publish(statusResult, `${port.name}/poe`)
+    }
+    else {
+        publish({ message: "no response" }, `${port.name}/status`)
+    }
+}
+
 export const triggerFullUpdate = async (config = getAppConfig().edgeswitch) => {
     for (const port of config.ports) {
-        const statusResult = await status(port)
-        if (statusResult) {
-            publish(statusResult, `${port}/status`)
-        }
-        else {
-            publish({ message: "no response" }, `${port}/status`)
-        }
+        await statusUpdate(port)
     }
 }
 
 const start = async () => {
-    // const ip = getAppConfig().denon.ip
-    // console.log(`Connecting to Denon device on ${ip}`)
-    // denonClient = new Denon.DenonClient(ip)
-    // await denonClient.connect()
-    //
-    // denonClient.on("masterVolumeChanged", (volume: any) => {
-    //     state.volume = volume
-    //     publishState()
-    // })
-    //
-    // denonClient.on("powerChanged", (power: any) => {
-    //     state.power = power
-    //     publishState()
-    // })
-    //
-    // denonClient.on("error", async (error: any) => {
-    //     console.log(error)
-    //     state.power = "ERROR"
-    //     publishState()
-    //
-    //     await start()
-    // })
-
     await triggerFullUpdate()
 }
 
+const getPort = (topic: string) => {
+    const parts = topic.split("/")
+    const port = parts.length > 3 ? parts[parts.length - 3] : undefined
+    if (port) {
+        return portByName[port]
+    }
+    return undefined
+}
+
+const sleep = (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+const onSet = async (topic: string, message: any) => {
+    const port = getPort(topic)
+    console.log("Received message", topic, message, port)
+    if (port) {
+        if (message === true) {
+            await turnOn(port.port)
+        }
+        else if (message === false) {
+            await turnOff(port.port)
+        }
+
+        await sleep(10_000)
+        await statusUpdate(port)
+    }
+}
+
 export const startApp = async () => {
+    for (const port of getAppConfig().edgeswitch.ports) {
+        portByName[port.name] = port
+    }
+
     const mqttCleanUp = await connectMqtt()
     await start()
     await triggerFullUpdate()
@@ -56,6 +72,12 @@ export const startApp = async () => {
     log.info("Scheduling refresh.")
     const task = cron.schedule("* * * * *", () => triggerFullUpdate())
     task.start()
+
+    mqttEmitter.on("/set", async (data: any) => {
+        const topic = data.topic
+        const message = JSON.parse(data.message.toString())
+        await onSet(topic, message)
+    })
 
     return () => {
         mqttCleanUp()

@@ -11,12 +11,25 @@ Ability to turn on/off PoW power of the ports via MQTT.
 
 ## Example message
 
+Topic: `home/ip/switch/wifi/poe`
 ```json
 {
-  "power":"ON",
-  "volume":24.5
+  "interface":"0/3",
+  "detection":"Good",
+  "status":1,
+  "class":"Class0",
+  "energy":3.25,
+  "voltage":53.59,
+  "current_mA":60.66,
+  "total_Whr":667.27,
+  "temperature":41
 }
 ```
+
+## Turn on/off PoW power
+
+Post a message to `home/ip/switch/wifi/poe/set` with the following payload: `true` or `false` 
+to turn on/off the PoW power.
 
 ## Example configuration
 
@@ -25,11 +38,18 @@ Ability to turn on/off PoW power of the ports via MQTT.
   "mqtt": {
     "url": "tcp://192.168.0.1:1883",
     "retain": true,
-    "topic": "home/denon",
+    "topic": "home/ip/switch",
     "qos": 2
   },
-  "denon": {
-    "ip": "127.0.0.1"
+  "edgeswitch": {
+    "ip": "192.168.1.2",
+    "username": "ubnt",
+    "password": "ubnt",
+    "ports": [
+      { "name": "router_port1", "port": "0/1" },
+      { "name": "router_port4_guest", "port": "0/2" },
+      { "name": "wifi", "port": "0/3" }
+    ]
   }
 }
 ```

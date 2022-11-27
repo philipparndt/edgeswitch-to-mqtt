@@ -1,7 +1,9 @@
+import EventEmitter from "events"
 import mqtt from "mqtt"
 
 import { ConfigMqtt, getAppConfig } from "../config/config"
 import { log } from "../logger"
+export const mqttEmitter = new EventEmitter()
 
 export type MqttInstance = {
     client: mqtt.MqttClient
@@ -66,6 +68,18 @@ const willMessage = () => {
 
 export const subscribe = (client: mqtt.MqttClient, topic: string) => {
     return new Promise((resolve, reject) => {
+        client.on("message", async (topic, message) => {
+            if (topic.endsWith("/get")) {
+                mqttEmitter.emit("/get", { topic, message })
+            }
+            else if (topic.endsWith("/state")) {
+                mqttEmitter.emit("/state", { topic, message })
+            }
+            else if (topic.endsWith("/set")) {
+                mqttEmitter.emit("/set", { topic, message })
+            }
+        })
+
         client.subscribe(topic, (err) => {
             if (!err) {
                 resolve(undefined)

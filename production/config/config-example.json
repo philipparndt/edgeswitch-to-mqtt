@@ -8,6 +8,11 @@
     "edgeswitch": {
         "ip": "192.168.1.2",
         "username": "ubnt",
-        "password": "ubnt"
+        "password": "ubnt",
+        "ports": [
+            { "name": "router_port1", "port": "0/1" },
+            { "name": "router_port4_guest", "port": "0/2" },
+            { "name": "nas", "port": "0/3" }
+        ]
     }
 }
