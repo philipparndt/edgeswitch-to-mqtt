@@ -1,4 +1,4 @@
-FROM node:18.6-alpine
+FROM node:19.9-alpine
 COPY app/dist /opt/app/
 WORKDIR /opt/app/
 
