@@ -84,9 +84,9 @@ export const status = async (port: string) => {
 }
 
 export const statusTotalTransmit = async () => {
-    const message= await exec([
+    const message = await exec([
         "configure",
-        `show interface ethernet all`]
+        "show interface ethernet all"]
     )
 
     return parseTotalTransmit(message)

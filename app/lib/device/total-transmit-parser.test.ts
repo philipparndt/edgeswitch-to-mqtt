@@ -32,21 +32,23 @@ describe("total transmit", () => {
 
         expect(result["0/1"]).toStrictEqual(
             {
-                port: '0/1',
-                bytesTx: '8020516364',
-                bytesRx: '41896398302',
-                packetsTx: '45520535',
-                packetsRx: '41612112'
+                port: "0/1",
+                bytesTx: 8020516364,
+                bytesRx: 41896398302,
+                packetsTx: 45520535,
+                packetsRx: 41612112,
+                totalBytes: 49916914666
             }
         )
 
         expect(result["0/16"]).toStrictEqual(
             {
-                port: '0/16',
-                bytesTx: '2386828617',
-                bytesRx: '4651605087',
-                packetsTx: '9740262',
-                packetsRx: '9131378'
+                port: "0/16",
+                bytesTx: 2386828617,
+                bytesRx: 4651605087,
+                packetsTx: 9740262,
+                packetsRx: 9131378,
+                totalBytes: 7038433704
             }
         )
     })

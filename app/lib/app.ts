@@ -2,7 +2,6 @@ import EventSource from "eventsource"
 import cron from "node-cron"
 import { getAppConfig, Port } from "./config/config"
 import { status, statusTotalTransmit, turnOff, turnOn } from "./device/edge-switch"
-import { TransmitData } from "./device/total-transmit-parser"
 import { log } from "./logger"
 
 import { connectMqtt, mqttEmitter, publish } from "./mqtt/mqtt-client"

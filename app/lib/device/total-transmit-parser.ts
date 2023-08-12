@@ -1,10 +1,11 @@
 
 export type TransmitData = {
     port: string
-    bytesTx: string
-    bytesRx: string
-    packetsTx: string
-    packetsRx: string
+    bytesTx: number
+    bytesRx: number
+    packetsTx: number
+    packetsRx: number
+    totalBytes: number
 }
 
 export const parseTotalTransmit = (message: string) => {
@@ -19,10 +20,11 @@ export const parseTotalTransmit = (message: string) => {
     for (const data of result) {
         resultData[data[0]] = {
             port: data[0],
-            bytesTx: data[1],
-            bytesRx: data[2],
-            packetsTx: data[3],
-            packetsRx: data[4]
+            bytesTx: +data[1],
+            bytesRx: +data[2],
+            packetsTx: +data[3],
+            packetsRx: +data[4],
+            totalBytes: (+data[1]) + (+data[2])
         }
     }
 
