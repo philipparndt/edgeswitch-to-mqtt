@@ -1,7 +1,7 @@
 import EventSource from "eventsource"
 import cron from "node-cron"
 import { getAppConfig, Port } from "./config/config"
-import { status, turnOff, turnOn } from "./device/edge-switch"
+import { status, statusTotalTransmit, turnOff, turnOn } from "./device/edge-switch"
 import { log } from "./logger"
 
 import { connectMqtt, mqttEmitter, publish } from "./mqtt/mqtt-client"
@@ -21,8 +21,15 @@ const statusUpdate = async (port: Port) => {
 }
 
 export const triggerFullUpdate = async (config = getAppConfig().edgeswitch) => {
+    const total = await statusTotalTransmit()
+
     for (const port of config.ports) {
         await statusUpdate(port)
+
+        const data = total[port.port]
+        if (data) {
+            publish(data, `${port.name}/transmit`)
+        }
     }
 }
 

@@ -1,6 +1,7 @@
 import AsyncLock from "async-lock"
 import { NodeSSH } from "node-ssh"
 import { getAppConfig } from "../config/config"
+import { parseTotalTransmit } from "./total-transmit-parser"
 
 const lock = new AsyncLock({ timeout: 5000 })
 
@@ -80,4 +81,13 @@ export const status = async (port: string) => {
         total_Whr: +result[6],
         temperature: +result[7]
     }
+}
+
+export const statusTotalTransmit = async () => {
+    const message = await exec([
+        "configure",
+        "show interface ethernet all"]
+    )
+
+    return parseTotalTransmit(message)
 }
