@@ -21,16 +21,34 @@ const statusUpdate = async (port: Port) => {
 }
 
 export const triggerFullUpdate = async (config = getAppConfig().edgeswitch) => {
-    const total = await statusTotalTransmit()
+    let retry = 0
+    while (retry < 3) {
+        retry++
+        try {
+            const total = await statusTotalTransmit()
 
-    for (const port of config.ports) {
-        await statusUpdate(port)
+            for (const port of config.ports) {
+                await statusUpdate(port)
 
-        const data = total[port.port]
-        if (data) {
-            publish(data, `${port.name}/transmit`)
+                const data = total[port.port]
+                if (data) {
+                    publish(data, `${port.name}/transmit`)
+                }
+            }
+        }
+        catch (e) {
+            log.error("Error while full update", e)
+            if (retry < 3) {
+                log.info("Retrying in 1 seconds.")
+                await sleep(1_000)
+            }
+            else {
+                throw e
+            }
         }
     }
+
+    log.debug("Full update done.")
 }
 
 const start = async () => {
