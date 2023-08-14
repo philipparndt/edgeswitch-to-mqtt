@@ -1,4 +1,5 @@
 import * as fs from "fs"
+import { log } from "../logger"
 
 export type ConfigMqtt = {
     url: string,
@@ -27,9 +28,14 @@ export type ConfigEdgeSwitch = {
 export type Config = {
     mqtt: ConfigMqtt
     edgeswitch: ConfigEdgeSwitch
+    loglevel: string
 }
 
 let appConfig: Config
+
+const configDefaults = {
+    loglevel: "info"
+}
 
 const mqttDefaults = {
     qos: 1,
@@ -39,6 +45,7 @@ const mqttDefaults = {
 
 export const applyDefaults = (config: any) => {
     return {
+        ...configDefaults,
         ...config,
         mqtt: { ...mqttDefaults, ...config.mqtt }
     } as Config
@@ -52,6 +59,7 @@ export const loadConfig = (file: string) => {
 
 export const applyConfig = (config: any) => {
     appConfig = applyDefaults(config)
+    log.configure(appConfig.loglevel.toUpperCase())
 }
 
 export const getAppConfig = () => {
