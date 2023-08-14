@@ -1,4 +1,3 @@
-
 export type TransmitData = {
     port: string
     bytesTx: number
