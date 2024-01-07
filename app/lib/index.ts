@@ -10,19 +10,18 @@ process.on("uncaughtException", (err: any) => {
         // ignore
     }
     else {
-        console.error("Uncaught Exception thrown", err)
-        console.log("Bye bye!")
+        log.error("Uncaught Exception thrown, Bye bye!", err)
         process.exit(-1)
     }
 })
 
 process.on("SIGINT", () => {
-    console.log("Bye bye!")
+    log.info("SIGINT, Bye bye!")
     process.exit(0)
 })
 
 process.on("SIGTERM", () => {
-    console.log("Bye bye!")
+    log.info("SIGTERM, Bye bye!")
     process.exit(0)
 })
 
