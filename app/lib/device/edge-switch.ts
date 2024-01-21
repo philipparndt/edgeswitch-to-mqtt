@@ -83,6 +83,8 @@ export const status = async (port: string) => {
     }
 }
 
+export type StatusType = Awaited<ReturnType<typeof status>>
+
 export const statusTotalTransmit = async () => {
     const message = await exec([
         "configure",

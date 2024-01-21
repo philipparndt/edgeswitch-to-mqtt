@@ -1,14 +1,13 @@
 import cron from "node-cron"
 import { getAppConfig, Port } from "./config/config"
-import { status, statusTotalTransmit, turnOff, turnOn } from "./device/edge-switch"
+import { status, statusTotalTransmit, StatusType, turnOff, turnOn } from "./device/edge-switch"
 import { log } from "./logger"
 
 import { connectMqtt, mqttEmitter, publish } from "./mqtt/mqtt-client"
 
 const portByName: any = {}
 
-const statusUpdate = async (port: Port) => {
-    const statusResult = await status(port.port)
+const statusUpdate = async (statusResult: StatusType, port: Port) => {
     if (statusResult) {
         publish(statusResult, `${port.name}/poe`)
     }
@@ -23,15 +22,24 @@ export const triggerFullUpdate = async (config = getAppConfig().edgeswitch) => {
         retry++
         try {
             const total = await statusTotalTransmit()
-
+            let energySum = 0
+            let whrSum = 0
             for (const port of config.ports) {
-                await statusUpdate(port)
+                const statusResult = await status(port.port)
+                await statusUpdate(statusResult, port)
 
                 const data = total[port.port]
                 if (data) {
                     publish(data, `${port.name}/transmit`)
                 }
+
+                if (statusResult?.energy) {
+                    energySum += statusResult.energy
+                    whrSum += statusResult.total_Whr
+                }
             }
+
+            publish({ energySum, whrSum }, "aggregated")
         }
         catch (e) {
             log.error("Error while full update", e)
@@ -77,7 +85,8 @@ const onSet = async (topic: string, message: any) => {
         }
 
         await sleep(10_000)
-        await statusUpdate(port)
+        const statusResult = await status(port.port)
+        await statusUpdate(statusResult, port)
     }
 }
 
