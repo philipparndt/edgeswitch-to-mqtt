@@ -39,6 +39,8 @@ export const triggerFullUpdate = async (config = getAppConfig().edgeswitch) => {
                 }
             }
 
+            energySum = Math.round(energySum * 100) / 100
+            whrSum = Math.round(whrSum * 100) / 100
             publish({ energySum, whrSum }, "aggregated")
         }
         catch (e) {
