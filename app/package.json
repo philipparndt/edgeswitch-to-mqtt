@@ -44,7 +44,7 @@
     "dependencies": {
         "@icholy/duration": "5.1.0",
         "async-lock": "1.4.0",
-        "mqtt": "4.3.7",
+        "mqtt": "5.3.5",
         "node-cron": "3.0.2",
         "node-ssh": "13.1.0",
         "winston": "3.10.0",
