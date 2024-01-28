@@ -1,9 +1,14 @@
+/**
+ * Parts of this code are based on the work of
+ * https://github.com/shenbowei/switch-ssh-go
+ */
+
 package edgeswitch
 
 import (
-    "fmt"
     "golang.org/x/crypto/ssh"
     "net"
+    "rnd7/edgeswitch-mqtt/logger"
     "time"
 )
 
@@ -13,19 +18,18 @@ type SSHSession struct {
    out         chan string
 }
 
-
 func StartSession(user, password, ipPort string) (*SSHSession, error) {
    sshSession := new(SSHSession)
    if err := sshSession.createConnection(user, password, ipPort); err != nil {
-       fmt.Printf("[ERROR] cannot create session connection: %s", err.Error())
+       logger.Error("Cannot create session connection", err)
        return nil, err
    }
    if err := sshSession.muxShell(); err != nil {
-       fmt.Printf("[ERROR] muxShell failed: %s", err.Error())
+       logger.Error("muxShell failed", err)
        return nil, err
    }
    if err := sshSession.start(); err != nil {
-       fmt.Printf("[ERROR] session start failed: %s", err.Error())
+       logger.Error("Session start failed", err)
        return nil, err
    }
    return sshSession, nil
@@ -48,12 +52,12 @@ func (this *SSHSession) createConnection(user, password, ipPort string) error {
        },
    })
    if err != nil {
-       fmt.Printf("[ERROR] SSH Dial err:%s", err.Error())
+       logger.Error("SSH Dial failed", err)
        return err
    }
    session, err := client.NewSession()
    if err != nil {
-       fmt.Printf("[ERROR] NewSession err:%s", err.Error())
+       logger.Error("NewSession failed", err)
        return err
    }
    this.session = session
@@ -63,7 +67,7 @@ func (this *SSHSession) createConnection(user, password, ipPort string) error {
 func (this *SSHSession) muxShell() error {
    defer func() {
        if err := recover(); err != nil {
-           fmt.Printf("[ERROR] SSHSession muxShell failed:%s", err)
+           logger.Err("SSHSession muxShell failed", err)
        }
    }()
 
@@ -74,19 +78,19 @@ func (this *SSHSession) muxShell() error {
    }
 
    if err := this.session.RequestPty("vt100", 80, 40, modes); err != nil {
-       fmt.Printf("[ERROR] RequestPty failed:%s", err)
+       logger.Error("RequestPty failed:%s", err)
        return err
    }
 
    w, err := this.session.StdinPipe()
    if err != nil {
-       fmt.Printf("[ERROR] StdinPipe() failed:%s", err.Error())
+       logger.Error("StdinPipe() failed", err)
        return err
    }
 
    r, err := this.session.StdoutPipe()
    if err != nil {
-       fmt.Printf("[ERROR] StdoutPipe() failed:%s", err.Error())
+       logger.Error("StdoutPipe() failed:%s", err)
        return err
    }
 
@@ -95,13 +99,13 @@ func (this *SSHSession) muxShell() error {
    go func() {
        defer func() {
            if err := recover(); err != nil {
-               fmt.Printf("[ERROR] Goroutine muxShell write err:%s", err)
+               logger.Err("Goroutine muxShell write failed", err)
            }
        }()
        for cmd := range in {
            _, err := w.Write([]byte(cmd + "\n"))
            if err != nil {
-               fmt.Printf("[ERROR] Writer write err:%s", err.Error())
+               logger.Error("Writer write failed", err)
                return
            }
        }
@@ -110,7 +114,7 @@ func (this *SSHSession) muxShell() error {
    go func() {
        defer func() {
            if err := recover(); err != nil {
-               fmt.Printf("[ERROR] Goroutine muxShell read err:%s", err)
+               logger.Err("Goroutine muxShell read failed", err)
            }
        }()
        var (
@@ -120,7 +124,7 @@ func (this *SSHSession) muxShell() error {
        for {
            n, err := r.Read(buf[t:])
            if err != nil {
-               fmt.Printf("[ERROR] Reader read err:%s", err.Error())
+               logger.Error("Reader read failed", err)
                return
            }
            t += n
@@ -135,7 +139,7 @@ func (this *SSHSession) muxShell() error {
 
 func (this *SSHSession) start() error {
    if err := this.session.Shell(); err != nil {
-       fmt.Printf("[ERROR] Start shell error:%s", err.Error())
+       logger.Error("Start shell error:%s", err)
        return err
    }
 
@@ -145,11 +149,11 @@ func (this *SSHSession) start() error {
 func (this *SSHSession) Close() {
    defer func() {
        if err := recover(); err != nil {
-           fmt.Printf("[ERROR] SSHSession Close err:%s", err)
+           logger.Err("SSHSession Close failed", err)
        }
    }()
    if err := this.session.Close(); err != nil {
-       fmt.Printf("[ERROR] Close session err:%s", err.Error())
+       logger.Error("Close session failed", err)
    }
    close(this.in)
    close(this.out)
@@ -158,32 +162,6 @@ func (this *SSHSession) Close() {
 func (this *SSHSession) Write(cmd string) {
    this.in <- cmd
 }
-
-//func (this *SSHSession) ReadChannelExpect(timeout time.Duration, expects ...string) string {
-//   output := ""
-//   isDelayed := false
-//   for i := 0; i < 300; i++ {
-//       time.Sleep(time.Millisecond * 100)
-//       newData := this.readChannelData()
-//       if newData != "" {
-//           output += newData
-//           isDelayed = false
-//           continue
-//       }
-//       for _, expect := range expects {
-//           if strings.Contains(output, expect) {
-//               return output
-//           }
-//       }
-//       if !isDelayed {
-//           time.Sleep(timeout)
-//           isDelayed = true
-//       } else {
-//           return output
-//       }
-//   }
-//   return output
-//}
 
 func (this *SSHSession) ReadChannelData() string {
    result := this.readChannelData()
