@@ -165,21 +165,20 @@ func (this *SSHSession) Write(cmd string) {
 
 func (this *SSHSession) ReadChannelData() string {
    result := this.readChannelData()
-   readMore := true
+   readMore := 3
    for i := 0; i < 3000; i++ {
-       time.Sleep(time.Millisecond * 10)
+       time.Sleep(time.Millisecond * 5)
        var data = this.readChannelData()
-       if data == "" {
-           if readMore {
-               readMore = false
+       if data == "" || data == " " {
+           if readMore > 0 {
+               readMore--
                this.Write(" ") // Send a space to the device to get more data
-               time.Sleep(time.Millisecond * 100)
+               time.Sleep(time.Millisecond * 50)
                continue
            }
            // No more data in the channel
            break
        }
-
        result += data
    }
 

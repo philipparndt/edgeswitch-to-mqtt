@@ -2,27 +2,42 @@ package main
 
 import (
 	"fmt"
+    "os"
+    "os/signal"
+    "rnd7/edgeswitch-mqtt/config"
     "rnd7/edgeswitch-mqtt/edgeswitch"
+    "rnd7/edgeswitch-mqtt/logger"
+    "syscall"
+    "time"
 )
 
+func mainLoop(cfg config.Config) {
+    for {
+        edgeswitch.Execute(cfg)
+        time.Sleep(time.Minute)
+    }
+}
+
 func main() {
+    if len(os.Args) < 2 {
+        fmt.Println("Usage: ./app config.json")
+        os.Exit(1)
+    }
 
-
-	cmds := make([]string, 0)
-	cmds = append(cmds, "configure")
-	cmds = append(cmds, "show interface ethernet all")
-    cmds = append(cmds, "show poe status 0/5")
-    cmds = append(cmds, "show poe status 0/6")
-
-    session, err := edgeswitch.StartSession(user, password, ipPort)
+    configFile := os.Args[1]
+    fmt.Println("Config file:", configFile)
+    cfg, err := config.LoadConfig(configFile)
     if err != nil {
-        fmt.Println("[ERROR] StartSession:\n", err.Error())
+        logger.Error("Failed loading config", err)
+        fmt.Println("Error loading config:", err)
         return
     }
 
-    for _, cmd := range cmds {
-        session.Write(cmd)
-        var r = session.ReadChannelData()
-        fmt.Println("ReadChannelData result: ", r)
-    }
+    go mainLoop(cfg)
+
+    quitChannel := make(chan os.Signal, 1)
+    signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
+    <-quitChannel
+
+    fmt.Println("Exiting...")
 }
