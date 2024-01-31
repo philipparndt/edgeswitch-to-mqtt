@@ -73,8 +73,8 @@ func (this *SSHSession) muxShell() error {
 
    modes := ssh.TerminalModes{
        ssh.ECHO: 1, // no echo
-       ssh.TTY_OP_ISPEED: 28800,
-       ssh.TTY_OP_OSPEED: 28800,
+       ssh.TTY_OP_ISPEED: 14_400,
+       ssh.TTY_OP_OSPEED: 14_400,
    }
 
    if err := this.session.RequestPty("vt100", 80, 40, modes); err != nil {
@@ -167,13 +167,13 @@ func (this *SSHSession) ReadChannelData() string {
    result := this.readChannelData()
    readMore := 3
    for i := 0; i < 3000; i++ {
-       time.Sleep(time.Millisecond * 5)
+       time.Sleep(time.Millisecond * 20)
        var data = this.readChannelData()
        if data == "" || data == " " {
            if readMore > 0 {
                readMore--
                this.Write(" ") // Send a space to the device to get more data
-               time.Sleep(time.Millisecond * 50)
+               time.Sleep(time.Millisecond * 100)
                continue
            }
            // No more data in the channel

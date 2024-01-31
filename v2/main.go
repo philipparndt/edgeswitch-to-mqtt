@@ -2,19 +2,23 @@ package main
 
 import (
 	"fmt"
+    "log"
     "os"
     "os/signal"
     "rnd7/edgeswitch-mqtt/config"
     "rnd7/edgeswitch-mqtt/edgeswitch"
     "rnd7/edgeswitch-mqtt/logger"
+    "rnd7/edgeswitch-mqtt/mqtt"
     "syscall"
     "time"
 )
 
 func mainLoop(cfg config.Config) {
     for {
+        info := log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime)
+        info.Println("Starting...")
         edgeswitch.Execute(cfg)
-        time.Sleep(time.Minute)
+        time.Sleep(time.Minute * 5)
     }
 }
 
@@ -25,7 +29,7 @@ func main() {
     }
 
     configFile := os.Args[1]
-    fmt.Println("Config file:", configFile)
+    logger.Info("Config file: " + configFile)
     cfg, err := config.LoadConfig(configFile)
     if err != nil {
         logger.Error("Failed loading config", err)
@@ -33,6 +37,7 @@ func main() {
         return
     }
 
+    go mqtt.Connect(cfg.MQTT)
     go mainLoop(cfg)
 
     quitChannel := make(chan os.Signal, 1)

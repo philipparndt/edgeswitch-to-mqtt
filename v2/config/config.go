@@ -6,13 +6,15 @@ import (
     "rnd7/edgeswitch-mqtt/logger"
 )
 
+type MQTTConfig struct {
+    URL    string `json:"url"`
+    Retain bool   `json:"retain"`
+    Topic  string `json:"topic"`
+    QoS    int    `json:"qos"`
+}
+
 type Config struct {
-    MQTT struct {
-        URL    string `json:"url"`
-        Retain bool   `json:"retain"`
-        Topic  string `json:"topic"`
-        QoS    int    `json:"qos"`
-    } `json:"mqtt"`
+    MQTT MQTTConfig `json:"mqtt"`
     EdgeSwitch struct {
         IP       string `json:"ip"`
         Username string `json:"username"`
