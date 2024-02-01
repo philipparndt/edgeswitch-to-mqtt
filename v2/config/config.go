@@ -25,6 +25,7 @@ type Config struct {
             Port string `json:"port"`
         } `json:"ports"`
     } `json:"edgeswitch"`
+    LogLevel string `json:"loglevel,omitempty"`
 }
 
 func replaceEnvVariables(input []byte) []byte {
@@ -53,6 +54,10 @@ func LoadConfig(file string) (Config, error) {
     if err != nil {
         logger.Error("Unmarshalling JSON:", err)
         return Config{}, err
+    }
+
+    if config.LogLevel == "" {
+        config.LogLevel = "info"
     }
 
     return config, nil

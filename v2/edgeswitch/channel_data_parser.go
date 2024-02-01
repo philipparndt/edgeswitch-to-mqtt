@@ -4,6 +4,7 @@ import (
     "bufio"
     "fmt"
     "regexp"
+    "rnd7/edgeswitch-mqtt/logger"
     "strings"
 )
 
@@ -27,7 +28,7 @@ func ParseChannelData(data string) ([]ChannelData, error) {
         if re.MatchString(line) {
             channelData, err := parseChannelLine(line)
             if err != nil {
-                fmt.Println("Error parsing line:", err)
+                logger.Error("Error parsing line:", err)
                 continue
             }
             channelDataList = append(channelDataList, channelData)

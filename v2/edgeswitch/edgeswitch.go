@@ -27,7 +27,7 @@ func ToName(portToName map[string]string, port string) string {
 }
 
 func Execute(config config.Config) {
-    logger.Info("Updating...")
+    logger.Debug("Updating...")
     user := config.EdgeSwitch.Username
     password := config.EdgeSwitch.Password
     ipPort := config.EdgeSwitch.IP + ":22"
@@ -42,6 +42,8 @@ func Execute(config config.Config) {
         logger.Error("StartSession failed", err)
         return
     }
+
+    defer session.Close()
 
     // Disable pagination
     session.Write("terminal length 0")
@@ -80,7 +82,7 @@ func Execute(config config.Config) {
         }
 
         for _, deviceInfo := range info {
-            mqtt.PublishJSON(ToName(portToName, deviceInfo.Intf) + "/status", mqtt.DeviceDataMessage{
+            mqtt.PublishJSON(ToName(portToName, deviceInfo.Intf) + "/poe", mqtt.DeviceDataMessage{
                 Interface: deviceInfo.Intf,
                 Detection: deviceInfo.Detection,
                 Status: ConvertStatus(deviceInfo.Detection),
@@ -103,5 +105,5 @@ func Execute(config config.Config) {
 
     mqtt.PublishJSON("aggregated", aggregated)
 
-    logger.Info("Update completed")
+    logger.Debug("Update completed")
 }

@@ -105,6 +105,10 @@ func (this *SSHSession) muxShell() error {
        for cmd := range in {
            _, err := w.Write([]byte(cmd + "\n"))
            if err != nil {
+               if err.Error() == "EOF" {
+                   time.Sleep(time.Millisecond * 5)
+                   return
+               }
                logger.Error("Writer write failed", err)
                return
            }
@@ -124,6 +128,10 @@ func (this *SSHSession) muxShell() error {
        for {
            n, err := r.Read(buf[t:])
            if err != nil {
+               if err.Error() == "EOF" {
+                   time.Sleep(time.Millisecond * 5)
+                   return
+               }
                logger.Error("Reader read failed", err)
                return
            }

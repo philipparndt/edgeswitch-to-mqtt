@@ -43,7 +43,7 @@ func connect(config config.MQTTConfig) {
     baseTopic = config.Topic
     statusTopic := baseTopic + "/bridge/state"
     clientID := generateRandomClientID(10)
-    fmt.Printf("Generated client ID: %s\n", clientID)
+    logger.Debug("Generated client ID: %s\n", clientID)
 
     opts := PAHO.NewClientOptions().
         AddBroker(config.URL).
@@ -52,7 +52,7 @@ func connect(config config.MQTTConfig) {
 
     client = PAHO.NewClient(opts)
     if token := client.Connect(); token.Wait() && token.Error() != nil {
-        fmt.Println("Error connecting to MQTT broker:", token.Error())
+        logger.Error("Error connecting to MQTT broker:", token.Error())
         os.Exit(1)
     }
     defer client.Disconnect(250)
@@ -70,13 +70,11 @@ func PublishAbsolute(topic string, message string) {
     token := client.Publish(topic, 0, false, message)
     token.Wait()
 
+    logger.Debug("Published message", topic, message)
+
     if token.Error() != nil {
         logger.Error("Error publishing message", token.Error())
     }
-}
-
-func Publish(topic string, message string) {
-    PublishAbsolute(baseTopic + "/" + topic, message)
 }
 
 func PublishJSON(topic string, data any) {

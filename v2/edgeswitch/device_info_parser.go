@@ -4,6 +4,7 @@ import (
     "bufio"
     "fmt"
     "regexp"
+    "rnd7/edgeswitch-mqtt/logger"
     "strconv"
     "strings"
 )
@@ -40,7 +41,7 @@ func ParseDeviceInfo(data string) ([]DeviceInfo, error) {
         if re.MatchString(line) {
             deviceInfo, err := parseLine(line)
             if err != nil {
-                fmt.Println("Error parsing line:", err, line)
+                logger.Error("Error parsing line:", err, line)
                 continue
             }
             devices = append(devices, deviceInfo)
@@ -48,7 +49,7 @@ func ParseDeviceInfo(data string) ([]DeviceInfo, error) {
     }
 
     if err := scanner.Err(); err != nil {
-        fmt.Println("Error reading file:", err)
+        logger.Error("Error reading file:", err)
         return nil, err
     }
 

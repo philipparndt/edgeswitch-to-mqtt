@@ -14,7 +14,7 @@ import (
 func mainLoop(cfg config.Config) {
     for {
         edgeswitch.Execute(cfg)
-        time.Sleep(time.Minute * 5)
+        time.Sleep(time.Second * 60)
     }
 }
 
@@ -32,9 +32,12 @@ func main() {
         return
     }
 
+    logger.SetLevel(cfg.LogLevel)
     mqtt.Start(cfg.MQTT)
 
     go mainLoop(cfg)
+
+    logger.Info("Application is now ready. Press Ctrl+C to quit.")
 
     quitChannel := make(chan os.Signal, 1)
     signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
