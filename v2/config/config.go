@@ -3,6 +3,7 @@ package config
 import (
     "encoding/json"
     "os"
+    "regexp"
     "rnd7/edgeswitch-mqtt/logger"
 )
 
@@ -26,12 +27,23 @@ type Config struct {
     } `json:"edgeswitch"`
 }
 
+func replaceEnvVariables(input []byte) []byte {
+    envVariableRegex := regexp.MustCompile(`\${([^}]+)}`)
+
+    return envVariableRegex.ReplaceAllFunc(input, func(match []byte) []byte {
+        envVarName := match[2 : len(match)-1] // Extract the variable name without "${}".
+        return []byte(os.Getenv(string(envVarName)))
+    })
+}
+
 func LoadConfig(file string) (Config, error) {
     data, err := os.ReadFile(file)
     if err != nil {
         logger.Error("Error reading config file", err)
         return Config{}, err
     }
+
+    data = replaceEnvVariables(data)
 
     // Create a Config object
     var config Config
