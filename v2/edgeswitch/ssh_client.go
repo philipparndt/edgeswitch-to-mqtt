@@ -67,7 +67,7 @@ func (this *SSHSession) createConnection(user, password, ipPort string) error {
 func (this *SSHSession) muxShell() error {
    defer func() {
        if err := recover(); err != nil {
-           logger.Err("SSHSession muxShell failed", err)
+           logger.Error("SSHSession muxShell failed", err)
        }
    }()
 
@@ -99,7 +99,7 @@ func (this *SSHSession) muxShell() error {
    go func() {
        defer func() {
            if err := recover(); err != nil {
-               logger.Err("Goroutine muxShell write failed", err)
+               logger.Error("Goroutine muxShell write failed", err)
            }
        }()
        for cmd := range in {
@@ -114,7 +114,7 @@ func (this *SSHSession) muxShell() error {
    go func() {
        defer func() {
            if err := recover(); err != nil {
-               logger.Err("Goroutine muxShell read failed", err)
+               logger.Error("Goroutine muxShell read failed", err)
            }
        }()
        var (
@@ -149,7 +149,7 @@ func (this *SSHSession) start() error {
 func (this *SSHSession) Close() {
    defer func() {
        if err := recover(); err != nil {
-           logger.Err("SSHSession Close failed", err)
+           logger.Error("SSHSession Close failed", err)
        }
    }()
    if err := this.session.Close(); err != nil {
@@ -165,23 +165,14 @@ func (this *SSHSession) Write(cmd string) {
 
 func (this *SSHSession) ReadChannelData() string {
    result := this.readChannelData()
-   readMore := 3
    for i := 0; i < 3000; i++ {
-       time.Sleep(time.Millisecond * 20)
+       time.Sleep(time.Millisecond * 100)
        var data = this.readChannelData()
        if data == "" || data == " " {
-           if readMore > 0 {
-               readMore--
-               this.Write(" ") // Send a space to the device to get more data
-               time.Sleep(time.Millisecond * 100)
-               continue
-           }
-           // No more data in the channel
            break
        }
        result += data
    }
-
    return result
 }
 

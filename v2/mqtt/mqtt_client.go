@@ -7,6 +7,7 @@ import (
     "os"
     "rnd7/edgeswitch-mqtt/config"
     "rnd7/edgeswitch-mqtt/logger"
+    "sync"
     "time"
 
     PAHO "github.com/eclipse/paho.mqtt.golang"
@@ -24,16 +25,24 @@ func generateRandomClientID(length int) string {
     for i := range result {
         result[i] = charset[seededRand.Intn(len(charset))]
     }
-    return string(result)
+    return "es_mqtt_" + string(result)
 }
 
 var client PAHO.Client
 var baseTopic string
 
-func Connect(config config.MQTTConfig) {
+var connectionWg sync.WaitGroup
+
+func Start(config config.MQTTConfig) {
+    connectionWg.Add(1)
+    go connect(config)
+    connectionWg.Wait()
+}
+
+func connect(config config.MQTTConfig) {
     baseTopic = config.Topic
     statusTopic := baseTopic + "/bridge/state"
-    clientID := generateRandomClientID(15)
+    clientID := generateRandomClientID(10)
     fmt.Printf("Generated client ID: %s\n", clientID)
 
     opts := PAHO.NewClientOptions().
@@ -50,19 +59,19 @@ func Connect(config config.MQTTConfig) {
 
     PublishAbsolute(statusTopic, "online")
 
+    logger.Info("Connected to MQTT broker", config.URL)
+    connectionWg.Done()
+
     // Keep the connection active until the application is terminated
     select {}
 }
 
 func PublishAbsolute(topic string, message string) {
-    logger.Info("Publishing message to topic:", topic, message)
     token := client.Publish(topic, 0, false, message)
     token.Wait()
 
     if token.Error() != nil {
         logger.Error("Error publishing message", token.Error())
-    } else {
-        logger.Info("Message published successfully")
     }
 }
 

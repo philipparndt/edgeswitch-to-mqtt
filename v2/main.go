@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-    "log"
     "os"
     "os/signal"
     "rnd7/edgeswitch-mqtt/config"
@@ -15,8 +13,6 @@ import (
 
 func mainLoop(cfg config.Config) {
     for {
-        info := log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime)
-        info.Println("Starting...")
         edgeswitch.Execute(cfg)
         time.Sleep(time.Minute * 5)
     }
@@ -24,25 +20,25 @@ func mainLoop(cfg config.Config) {
 
 func main() {
     if len(os.Args) < 2 {
-        fmt.Println("Usage: ./app config.json")
+        logger.Error("No config file specified")
         os.Exit(1)
     }
 
     configFile := os.Args[1]
-    logger.Info("Config file: " + configFile)
+    logger.Info("Config file", configFile)
     cfg, err := config.LoadConfig(configFile)
     if err != nil {
         logger.Error("Failed loading config", err)
-        fmt.Println("Error loading config:", err)
         return
     }
 
-    go mqtt.Connect(cfg.MQTT)
+    mqtt.Start(cfg.MQTT)
+
     go mainLoop(cfg)
 
     quitChannel := make(chan os.Signal, 1)
     signal.Notify(quitChannel, syscall.SIGINT, syscall.SIGTERM)
     <-quitChannel
 
-    fmt.Println("Exiting...")
+    logger.Info("Received quit signal")
 }

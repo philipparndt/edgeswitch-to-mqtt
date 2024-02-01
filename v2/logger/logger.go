@@ -1,26 +1,31 @@
 package logger
 
 import (
-    "fmt"
+    "log"
+    "os"
+    "strings"
     "time"
 )
 
-func Error(message string, a ...any) {
-    isoDateTime := time.Now().Format("2006-01-02 15:04:05")
-    fmt.Println("[ERROR]", isoDateTime, message, a)
+var CustomLogger *log.Logger
+
+func init() {
+    CustomLogger = log.New(os.Stdout, "", 0)
+}
+
+func Log(severity string, message string, a ...any) {
+    if len(a) == 0 {
+        CustomLogger.Printf("[%s] %s %s\n", strings.ToUpper(severity), time.Now().Format("2006-01-02T15:04:05"), message)
+        return
+    } else {
+        CustomLogger.Printf("[%s] %s %s %s\n", strings.ToUpper(severity), time.Now().Format("2006-01-02T15:04:05"), message, a)
+    }
 }
 
 func Info(message string, a ...any) {
-    isoDateTime := time.Now().Format("2006-01-02 15:04:05")
-
-    if len(a) == 0 {
-        fmt.Println("[INFO]", isoDateTime, message)
-        return
-    }
-    fmt.Println("[INFO]", isoDateTime, message, a)
+    Log("info", message, a...)
 }
 
-
-func Err(message string, err any) {
-    fmt.Printf("[ERROR] %s: %s", message, err)
+func Error(message string, a ...any) {
+    Log("error", message, a...)
 }

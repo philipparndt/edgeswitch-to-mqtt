@@ -27,7 +27,7 @@ func ToName(portToName map[string]string, port string) string {
 }
 
 func Execute(config config.Config) {
-    logger.Info("Execute --------------")
+    logger.Info("Updating...")
     user := config.EdgeSwitch.Username
     password := config.EdgeSwitch.Password
     ipPort := config.EdgeSwitch.IP + ":22"
@@ -43,6 +43,10 @@ func Execute(config config.Config) {
         return
     }
 
+    // Disable pagination
+    session.Write("terminal length 0")
+    var _ = session.ReadChannelData()
+
     session.Write("configure")
     var _ = session.ReadChannelData()
 
@@ -53,8 +57,6 @@ func Execute(config config.Config) {
     }
 
     for _, chdata := range channelData {
-        logger.Info(chdata.Port, portToName[chdata.Port])
-
         mqtt.PublishJSON(ToName(portToName, chdata.Port) + "/transmit", mqtt.TransmitMessage{
             Port: chdata.Port,
             BytesTx: chdata.BytesTx,
@@ -64,8 +66,6 @@ func Execute(config config.Config) {
             TotalBytes: chdata.BytesTx + chdata.BytesRx,
         })
     }
-
-    logger.Info("Data", channelData)
 
     aggregated := mqtt.AggregatedEnergy{
         EnergySum: 0.0,
@@ -78,7 +78,6 @@ func Execute(config config.Config) {
         if err != nil {
             return
         }
-        logger.Info("Info", info)
 
         for _, deviceInfo := range info {
             mqtt.PublishJSON(ToName(portToName, deviceInfo.Intf) + "/status", mqtt.DeviceDataMessage{
@@ -104,5 +103,5 @@ func Execute(config config.Config) {
 
     mqtt.PublishJSON("aggregated", aggregated)
 
-    logger.Info("Complete --------------")
+    logger.Info("Update completed")
 }
