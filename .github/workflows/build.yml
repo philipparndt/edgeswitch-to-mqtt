@@ -33,4 +33,3 @@ jobs:
           push: false
           tags: |
             pharndt/edgeswitch:latest
-            pharndt/edgeswitch:${{env.RELEASE_VERSION}}
