@@ -76,6 +76,9 @@ docker-compose up -d
 
 # build
 
-## Build container
+run `go build .` in the `app` folder
 
-Build the docker container using `build.sh`.
+# NodeJS version
+
+The main version of this bridge is written in Go. 
+There is also a NodeJS version available in the `0.x` branch (no longer maintained).
