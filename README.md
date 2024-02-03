@@ -11,7 +11,7 @@ Ability to turn on/off PoW power of the ports via MQTT.
 
 ## Example message
 
-Topic: `home/ip/switch/wifi/poe`
+Topic: `home/ip/switch/ports/wifi/poe`
 ```json
 {
   "interface":"0/3",
@@ -28,7 +28,7 @@ Topic: `home/ip/switch/wifi/poe`
 
 ## Turn on/off PoW power
 
-Post a message to `home/ip/switch/wifi/poe/set` with the following payload: `true` or `false` 
+Post a message to `home/ip/switch/ports/wifi/poe/set` with the following payload: `true` or `false` 
 to turn on/off the PoW power.
 
 ## Example configuration
