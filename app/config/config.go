@@ -14,16 +14,18 @@ type MQTTConfig struct {
     QoS    int    `json:"qos"`
 }
 
+type Port struct {
+    Name string `json:"name"`
+    Port string `json:"port"`
+}
+
 type Config struct {
     MQTT MQTTConfig `json:"mqtt"`
     EdgeSwitch struct {
         IP       string `json:"ip"`
         Username string `json:"username"`
         Password string `json:"password"`
-        Ports    []struct {
-            Name string `json:"name"`
-            Port string `json:"port"`
-        } `json:"ports"`
+        Ports    []Port `json:"ports"`
     } `json:"edgeswitch"`
     LogLevel string `json:"loglevel,omitempty"`
 }

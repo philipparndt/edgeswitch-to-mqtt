@@ -7,37 +7,80 @@ import (
     "strings"
 )
 
-func ConvertStatus(statusString string) int {
-    // Compare the string case-insensitively
-    if strings.EqualFold(statusString, "Good") {
-        return 1
-    } else {
-        return 0
-    }
-}
+var cfg config.Config
+var portToName = make(map[string]string)
+var nameToPort map[string]string
 
-func ToName(portToName map[string]string, port string) string {
-    name := portToName[port]
-    if name == "" {
-        name = port
-        name = strings.ReplaceAll(name, "/", "_")
-    }
-    return name
+func Configure(configuration config.Config) {
+    cfg = configuration
 
-}
-
-func Execute(config config.Config) {
-    logger.Debug("Updating...")
-    user := config.EdgeSwitch.Username
-    password := config.EdgeSwitch.Password
-    ipPort := config.EdgeSwitch.IP + ":22"
-
-    portToName := make(map[string]string)
-    for _, portInfo := range config.EdgeSwitch.Ports {
+    for _, portInfo := range cfg.EdgeSwitch.Ports {
         portToName[portInfo.Port] = portInfo.Name
     }
 
-    session, err := StartSession(user, password, ipPort)
+    nameToPort = make(map[string]string)
+    for _, portInfo := range configuration.EdgeSwitch.Ports {
+        nameToPort[portInfo.Name] = portInfo.Port
+    }
+}
+
+func OnMessage(topic string, payloadData []byte) {
+    payload := string(payloadData)
+    paths := strings.Split(topic, "/")
+    name := strings.TrimSpace(paths[len(paths) - 3])
+    port := nameToPort[name]
+
+    if port == "" {
+        logger.Error("Port not found for name", name)
+        return
+    }
+
+    if strings.EqualFold(payload, "true") {
+        TurnPoEOn(port)
+    } else if strings.EqualFold(payload, "false") {
+        TurnPoEOff(port)
+    }
+}
+
+func TurnPoEOff(port string) {
+    logger.Info("Switching PoE OFF for port", port)
+    poeSwitch(port, "shutdown")
+}
+
+func TurnPoEOn(port string) {
+    logger.Info("Switching PoE ON for port", port)
+    poeSwitch(port, "auto")
+}
+
+func poeSwitch(port string, opmode string) {
+    execute([]string{
+        "configure",
+        "interface " + port,
+        "poe opmode " + opmode})
+}
+
+func execute(commands []string) {
+    logger.Debug("Executing commands", commands)
+    session, err := StartSession(cfg.EdgeSwitch.Username, cfg.EdgeSwitch.Password, cfg.EdgeSwitch.IP + ":22")
+    if err != nil {
+        logger.Error("StartSession failed", err)
+        return
+    }
+    logger.Debug("Session started")
+
+    defer session.Close()
+
+    for _, cmd := range commands {
+        session.Write(cmd)
+        var x = session.ReadChannelData()
+        logger.Debug("Command:", cmd, "Response:", x)
+    }
+}
+
+func Execute() {
+    logger.Debug("Updating...")
+
+    session, err := StartSession(cfg.EdgeSwitch.Username, cfg.EdgeSwitch.Password, cfg.EdgeSwitch.IP + ":22")
     if err != nil {
         logger.Error("StartSession failed", err)
         return
@@ -59,7 +102,7 @@ func Execute(config config.Config) {
     }
 
     for _, chdata := range channelData {
-        mqtt.PublishJSON(ToName(portToName, chdata.Port) + "/transmit", mqtt.TransmitMessage{
+        mqtt.PublishJSON("ports/" + toName(portToName, chdata.Port) + "/transmit", mqtt.TransmitMessage{
             Port: chdata.Port,
             BytesTx: chdata.BytesTx,
             BytesRx: chdata.BytesRx,
@@ -74,7 +117,7 @@ func Execute(config config.Config) {
         WhrSum: 0.0,
     }
 
-    for _, port := range config.EdgeSwitch.Ports {
+    for _, port := range cfg.EdgeSwitch.Ports {
         session.Write("show poe status " + port.Port)
         info, err := ParseDeviceInfo(session.ReadChannelData())
         if err != nil {
@@ -82,15 +125,15 @@ func Execute(config config.Config) {
         }
 
         for _, deviceInfo := range info {
-            mqtt.PublishJSON(ToName(portToName, deviceInfo.Intf) + "/poe", mqtt.DeviceDataMessage{
-                Interface: deviceInfo.Intf,
-                Detection: deviceInfo.Detection,
-                Status: ConvertStatus(deviceInfo.Detection),
-                Class: deviceInfo.Class,
-                Energy: deviceInfo.ConsumedW,
-                Voltage: deviceInfo.VoltageV,
-                CurrentmA: deviceInfo.CurrentmA,
-                TotalWhr: deviceInfo.ConsumedMeterWhr,
+            mqtt.PublishJSON("ports/" + toName(portToName, deviceInfo.Intf) + "/poe", mqtt.DeviceDataMessage{
+                Interface:   deviceInfo.Intf,
+                Detection:   deviceInfo.Detection,
+                Status:      convertStatus(deviceInfo.Detection),
+                Class:       deviceInfo.Class,
+                Energy:      deviceInfo.ConsumedW,
+                Voltage:     deviceInfo.VoltageV,
+                CurrentmA:   deviceInfo.CurrentmA,
+                TotalWhr:    deviceInfo.ConsumedMeterWhr,
                 Temperature: deviceInfo.TemperatureC,
             })
 
@@ -106,4 +149,24 @@ func Execute(config config.Config) {
     mqtt.PublishJSON("aggregated", aggregated)
 
     logger.Debug("Update completed")
+}
+
+
+func convertStatus(statusString string) int {
+    // Compare the string case-insensitively
+    if strings.EqualFold(statusString, "Good") {
+        return 1
+    } else {
+        return 0
+    }
+}
+
+func toName(portToName map[string]string, port string) string {
+    name := portToName[port]
+    if name == "" {
+        name = port
+        name = strings.ReplaceAll(name, "/", "_")
+    }
+    return name
+
 }

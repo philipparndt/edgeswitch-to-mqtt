@@ -15,9 +15,17 @@ import (
 
 var messagesPublishedCtr int
 
-func onMessageReceived(client PAHO.Client, message PAHO.Message) {
-    fmt.Printf("Received message on topic: %s\n", message.Topic())
-    fmt.Printf("Message: %s\n", message.Payload())
+var client PAHO.Client
+var baseTopic string
+
+var connectionWg sync.WaitGroup
+
+type OnMessageListener func(string, []byte)
+
+func Start(config config.MQTTConfig, onMessage OnMessageListener) {
+    connectionWg.Add(1)
+    go connect(config, onMessage)
+    connectionWg.Wait()
 }
 
 func generateRandomClientID(length int) string {
@@ -30,17 +38,6 @@ func generateRandomClientID(length int) string {
     return "es_mqtt_" + string(result)
 }
 
-var client PAHO.Client
-var baseTopic string
-
-var connectionWg sync.WaitGroup
-
-func Start(config config.MQTTConfig) {
-    connectionWg.Add(1)
-    go connect(config)
-    connectionWg.Wait()
-}
-
 func LogMessagesPublished() {
     for {
         time.Sleep(time.Hour)
@@ -49,7 +46,7 @@ func LogMessagesPublished() {
     }
 }
 
-func connect(config config.MQTTConfig) {
+func connect(config config.MQTTConfig, onMessage OnMessageListener) {
     baseTopic = config.Topic
     statusTopic := baseTopic + "/bridge/state"
     clientID := generateRandomClientID(10)
@@ -67,7 +64,15 @@ func connect(config config.MQTTConfig) {
     }
     defer client.Disconnect(250)
 
-    PublishAbsolute(statusTopic, "online")
+    client.Subscribe(
+        baseTopic + "/ports/+/poe/set",
+        2,
+        func(_ PAHO.Client, message PAHO.Message) {
+            onMessage(message.Topic(), message.Payload())
+        },
+    )
+
+    PublishAbsolute(statusTopic, "online", true)
 
     logger.Info("Connected to MQTT broker", config.URL)
     connectionWg.Done()
@@ -77,8 +82,8 @@ func connect(config config.MQTTConfig) {
     select {}
 }
 
-func PublishAbsolute(topic string, message string) {
-    token := client.Publish(topic, 0, false, message)
+func PublishAbsolute(topic string, message string, retained bool) {
+    token := client.Publish(topic, 2, retained, message)
     token.Wait()
 
     messagesPublishedCtr++
@@ -94,6 +99,6 @@ func PublishJSON(topic string, data any) {
     if err != nil {
         logger.Error("Error marshaling to JSON", err)
     } else {
-        PublishAbsolute(baseTopic + "/" + topic, string(jsonData))
+        PublishAbsolute(baseTopic + "/" + topic, string(jsonData), false)
     }
 }

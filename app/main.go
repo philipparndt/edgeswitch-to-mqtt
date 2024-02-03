@@ -12,8 +12,10 @@ import (
 )
 
 func mainLoop(cfg config.Config) {
+    edgeswitch.Configure(cfg)
+
     for {
-        edgeswitch.Execute(cfg)
+        edgeswitch.Execute()
         time.Sleep(time.Minute * 10)
     }
 }
@@ -33,7 +35,7 @@ func main() {
     }
 
     logger.SetLevel(cfg.LogLevel)
-    mqtt.Start(cfg.MQTT)
+    mqtt.Start(cfg.MQTT, edgeswitch.OnMessage)
 
     go mainLoop(cfg)
 
