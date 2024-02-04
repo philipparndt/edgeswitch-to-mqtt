@@ -41,7 +41,7 @@ func ParseDeviceInfo(data string) ([]DeviceInfo, error) {
         if re.MatchString(line) {
             deviceInfo, err := parseLine(line)
             if err != nil {
-                logger.Error("Error parsing line:", err, line)
+                logger.Error("Error parsing device info line:", err, line)
                 continue
             }
             devices = append(devices, deviceInfo)
@@ -61,7 +61,7 @@ func parseLine(line string) (DeviceInfo, error) {
     parts := r.Split(line, -1)
 
     if len(parts) != 8 {
-        return DeviceInfo{}, fmt.Errorf("error parsing line: %s", line)
+        return DeviceInfo{}, fmt.Errorf("error parsing line (len!=8): (%d) %s", len(parts), line)
     }
 
     var deviceInfo DeviceInfo

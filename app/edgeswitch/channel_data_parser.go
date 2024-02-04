@@ -28,7 +28,7 @@ func ParseChannelData(data string) ([]ChannelData, error) {
         if re.MatchString(line) {
             channelData, err := parseChannelLine(line)
             if err != nil {
-                logger.Error("Error parsing line:", err)
+                logger.Error("Error parsing channel line:", err)
                 continue
             }
             channelDataList = append(channelDataList, channelData)
