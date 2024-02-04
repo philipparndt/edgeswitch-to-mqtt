@@ -3,8 +3,8 @@ package edgeswitch
 import (
     "bufio"
     "fmt"
+    "github.com/philipparndt/go-logger"
     "regexp"
-    "rnd7/edgeswitch-mqtt/logger"
     "strconv"
     "strings"
 )

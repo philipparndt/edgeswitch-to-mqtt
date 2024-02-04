@@ -2,17 +2,10 @@ package config
 
 import (
     "encoding/json"
+    "github.com/philipparndt/go-logger"
+    "github.com/philipparndt/mqtt-gateway/config"
     "os"
-    "regexp"
-    "rnd7/edgeswitch-mqtt/logger"
 )
-
-type MQTTConfig struct {
-    URL    string `json:"url"`
-    Retain bool   `json:"retain"`
-    Topic  string `json:"topic"`
-    QoS    int    `json:"qos"`
-}
 
 type Port struct {
     Name string `json:"name"`
@@ -20,7 +13,7 @@ type Port struct {
 }
 
 type Config struct {
-    MQTT MQTTConfig `json:"mqtt"`
+    MQTT config.MQTTConfig `json:"mqtt"`
     EdgeSwitch struct {
         IP       string `json:"ip"`
         Username string `json:"username"`
@@ -30,15 +23,6 @@ type Config struct {
     LogLevel string `json:"loglevel,omitempty"`
 }
 
-func replaceEnvVariables(input []byte) []byte {
-    envVariableRegex := regexp.MustCompile(`\${([^}]+)}`)
-
-    return envVariableRegex.ReplaceAllFunc(input, func(match []byte) []byte {
-        envVarName := match[2 : len(match)-1] // Extract the variable name without "${}".
-        return []byte(os.Getenv(string(envVarName)))
-    })
-}
-
 func LoadConfig(file string) (Config, error) {
     data, err := os.ReadFile(file)
     if err != nil {
@@ -46,21 +30,21 @@ func LoadConfig(file string) (Config, error) {
         return Config{}, err
     }
 
-    data = replaceEnvVariables(data)
+    data = config.ReplaceEnvVariables(data)
 
     // Create a Config object
-    var config Config
+    var cfg Config
 
     // Unmarshal the JSON data into the Config object
-    err = json.Unmarshal(data, &config)
+    err = json.Unmarshal(data, &cfg)
     if err != nil {
         logger.Error("Unmarshalling JSON:", err)
         return Config{}, err
     }
 
-    if config.LogLevel == "" {
-        config.LogLevel = "info"
+    if cfg.LogLevel == "" {
+        cfg.LogLevel = "info"
     }
 
-    return config, nil
+    return cfg, nil
 }

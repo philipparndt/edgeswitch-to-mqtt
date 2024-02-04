@@ -1,9 +1,9 @@
 package edgeswitch
 
 import (
+    "github.com/philipparndt/go-logger"
+    "github.com/philipparndt/mqtt-gateway/mqtt"
     "rnd7/edgeswitch-mqtt/config"
-    "rnd7/edgeswitch-mqtt/logger"
-    "rnd7/edgeswitch-mqtt/mqtt"
     "strings"
 )
 
@@ -102,7 +102,7 @@ func Execute() {
     }
 
     for _, chdata := range channelData {
-        mqtt.PublishJSON("ports/" + toName(portToName, chdata.Port) + "/transmit", mqtt.TransmitMessage{
+        mqtt.PublishJSON("ports/" + toName(portToName, chdata.Port) + "/transmit", TransmitMessage{
             Port: chdata.Port,
             BytesTx: chdata.BytesTx,
             BytesRx: chdata.BytesRx,
@@ -112,7 +112,7 @@ func Execute() {
         })
     }
 
-    aggregated := mqtt.AggregatedEnergy{
+    aggregated := AggregatedEnergy{
         EnergySum: 0.0,
         WhrSum: 0.0,
     }
@@ -125,7 +125,7 @@ func Execute() {
         }
 
         for _, deviceInfo := range info {
-            mqtt.PublishJSON("ports/" + toName(portToName, deviceInfo.Intf) + "/poe", mqtt.DeviceDataMessage{
+            mqtt.PublishJSON("ports/" + toName(portToName, deviceInfo.Intf) + "/poe", DeviceDataMessage{
                 Interface:   deviceInfo.Intf,
                 Detection:   deviceInfo.Detection,
                 Status:      convertStatus(deviceInfo.Detection),

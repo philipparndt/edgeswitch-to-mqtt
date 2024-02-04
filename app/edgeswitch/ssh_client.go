@@ -6,9 +6,9 @@
 package edgeswitch
 
 import (
-	"golang.org/x/crypto/ssh"
+    "github.com/philipparndt/go-logger"
+    "golang.org/x/crypto/ssh"
 	"net"
-	"rnd7/edgeswitch-mqtt/logger"
 	"sync"
 	"time"
 )

@@ -1,11 +1,11 @@
 package main
 
 import (
+    "github.com/philipparndt/go-logger"
     "os"
     "os/signal"
     "rnd7/edgeswitch-mqtt/config"
     "rnd7/edgeswitch-mqtt/edgeswitch"
-    "rnd7/edgeswitch-mqtt/logger"
     "rnd7/edgeswitch-mqtt/mqtt"
     "syscall"
     "time"
