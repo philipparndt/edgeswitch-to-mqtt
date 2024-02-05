@@ -41,16 +41,11 @@ func ParseDeviceInfo(data string) ([]DeviceInfo, error) {
         if re.MatchString(line) {
             deviceInfo, err := parseLine(line)
             if err != nil {
-                logger.Error("Error parsing device info line:", err, line)
-                continue
+                logger.Error("Error parsing device info line:", err)
+                return []DeviceInfo{}, nil
             }
             devices = append(devices, deviceInfo)
         }
-    }
-
-    if err := scanner.Err(); err != nil {
-        logger.Error("Error reading file:", err)
-        return nil, err
     }
 
     return devices, nil
