@@ -76,7 +76,8 @@ docker-compose up -d
 
 # build
 
-run `go build .` in the `app` folder
+- run `make build` in the app folder
+- run `make run` in the app folder to start the bridge
 
 # NodeJS version
 
