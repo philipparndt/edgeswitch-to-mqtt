@@ -1,17 +1,17 @@
 module rnd7/edgeswitch-mqtt
 
-go 1.19
+go 1.24.0
 
 require (
-	github.com/eclipse/paho.mqtt.golang v1.4.3
-	golang.org/x/crypto v0.18.0
+	github.com/eclipse/paho.mqtt.golang v1.5.1
+	github.com/philipparndt/go-logger v1.0.0
+	github.com/philipparndt/mqtt-gateway v1.1.0
+	golang.org/x/crypto v0.42.0
 )
 
 require (
-	github.com/gorilla/websocket v1.5.1 // indirect
-	github.com/philipparndt/go-logger v1.0.0 // indirect
-	github.com/philipparndt/mqtt-gateway v1.1.0 // indirect
-	golang.org/x/net v0.20.0 // indirect
-	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
+	golang.org/x/net v0.44.0 // indirect
+	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 )
